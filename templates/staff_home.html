@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Home{% endblock %}
+
+{% block content %}
+<div class="staff-home-container text-center">
+    <div class="welcome-message mb-5">
+        <h2 class="text-white">Welcome, {{ current_user.username }}!</h2>
+        <p class="lead text-light">Who would you like to send to today?</p>
+    </div>
+
+    <div class="choice-buttons d-flex flex-column flex-md-row justify-content-center gap-4">
+        <a href="{{ url_for('encrypt_patient', role='patient') }}" 
+           class="btn btn-patient btn-lg px-5 py-3">
+           <i class="fas fa-user-injured me-2"></i> Patient
+        </a>
+        <a href="{{ url_for('encrypt_staff', role='staff') }}" 
+           class="btn btn-staff btn-lg px-5 py-3">
+           <i class="fas fa-user-md me-2"></i> Medical Staff
+        </a>
+    </div>
+</div>
+
+<style>
+    .staff-home-container {
+        background: linear-gradient(135deg, rgba(34, 144, 116, 0.85) 0%, rgba(26, 92, 77, 0.85) 100%);
+        min-height: calc(100vh - var(--navbar-height));
+        padding: 4rem 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .welcome-message {
+        max-width: 600px;
+        margin-bottom: 3rem !important;
+    }
+    
+    .btn-patient {
+        background-color: #20c997;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-patient:hover {
+        background-color: #199d76;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(32, 201, 151, 0.4);
+    }
+    
+    .btn-staff {
+        background-color:rgb(145, 145, 148);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-staff:hover {
+        background-color: rgb(145, 145, 148);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(78, 115, 223, 0.4);
+    }
+    
+    @media (max-width: 768px) {
+        .staff-home-container {
+            padding: 2rem 1rem;
+        }
+        
+        .choice-buttons {
+            width: 100%;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .btn-patient, .btn-staff {
+            width: 100%;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white mb-0">Send Secure Message</h2>
+        <a href="{{ url_for('staff_home') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i> Back to Home
+        </a>
+    </div>
+    
+    <div class="card shadow-lg border-0" style="background: rgba(255, 255, 255, 0.95);">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                <!-- Recipient Selection -->
+                <div class="form-group mb-4">
+                    <label for="receiver" class="form-label fw-bold">Send to:</label>
+                    <select class="form-control p-3" id="receiver" name="receiver" required
+                            style="border-radius: 8px; border: 1px solid #ced4da;">
+                        <option value="">Select recipient</option>
+                        {% for user in users %}
+                            <option value="{{ user.username }}">{{ user.username }} ({{ user.role }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Subject -->
+                <div class="form-group mb-4">
+                    <label for="subject" class="form-label fw-bold">Subject:</label>
+                    <input type="text" class="form-control p-3" id="subject" name="subject" required
+                           style="border-radius: 8px; border: 1px solid #ced4da;">
+                </div>
+                
+                <!-- Message Body -->
+                <div class="form-group mb-4">
+                    <label for="body" class="form-label fw-bold">Message:</label>
+                    <textarea class="form-control p-3" id="body" name="body" rows="5"
+                              style="border-radius: 8px; border: 1px solid #ced4da;"></textarea>
+                </div>
+                
+                <!-- Image Attachment -->
+                <div class="form-group mb-4">
+                    <label for="image" class="form-label fw-bold">Attach Image:</label>
+                    <input type="file" class="form-control p-3" id="image" name="image"
+                           style="border-radius: 8px; border: 1px solid #ced4da;">
+                    
+                    {% if prefilled_image %}
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <p class="mb-2"><i class="fas fa-lock me-2"></i> Encrypted image selected: <strong>{{ prefilled_image }}</strong></p>
+                            <input type="hidden" name="prefilled_image" value="{{ prefilled_image }}">
+                            <img src="{{ url_for('static', filename='uploads/' + prefilled_image) }}" 
+                                 alt="Prefilled Image" 
+                                 class="img-thumbnail mt-2"
+                                 style="max-width: 200px; max-height: 200px;">
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary px-5 py-3">
+                        <i class="fas fa-paper-plane me-2"></i> Send Secure Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, rgba(34, 144, 116, 0.85) 0%, rgba(26, 92, 77, 0.85) 100%);
+    }
+    
+    .card {
+        border-radius: 12px;
+    }
+    
+    .btn-primary {
+        background-color: #20c997 ;
+        border-color: #20c997;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background-color: #20c997;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(58, 92, 204, 0.3);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .img-thumbnail {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        padding: 0.25rem;
+        background-color: #fff;
+    }
+</style>
+{% endblock %}

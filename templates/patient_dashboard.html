@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white mb-0">Your Messages</h2>
+      
+    </div>
+
+    {% if messages %}
+    <div class="list-group message-list">
+        {% for msg in messages %}
+        <div class="list-group-item mb-3 p-3 rounded-3" 
+             style="background-color: rgba(255, 255, 255, 0.95); border-left: 4px solid #20c997 ;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1 text-dark">{{ msg.subject }}</h5>
+                    <p class="mb-0 text-muted">
+                        <i class="fas fa-user-md me-1"></i>From {{ msg.sender.username }} 
+                        <i class="fas fa-clock ms-3 me-1"></i>{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                    </p>
+                </div>
+                <a href="{{ url_for('view_message', message_id=msg.id) }}" 
+                   class="btn btn-primary btn-sm px-3 py-2">
+                    <i class="fas fa-eye me-1"></i> View
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state text-center py-5 rounded-3" style="background-color: rgba(255, 255, 255, 0.95);">
+        <i class="fas fa-envelope-open-text fa-3x text-muted mb-3"></i>
+        <h4 class="text-dark">No messages yet</h4>
+        <p class="text-muted">You'll see your messages here when you receive them</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, rgba(34, 144, 116, 0.85) 0%, rgba(26, 92, 77, 0.85) 100%);
+    }
+    
+    .list-group-item {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border: none;
+    }
+    
+    .list-group-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+        background-color: #20c997 ;
+        border-color: #20c997 ;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background-color: #20c997 ;
+        transform: translateY(-2px);
+    }
+    
+    .empty-state {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    .btn-outline-light {
+        border-width: 2px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

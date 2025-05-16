@@ -1,0 +1,89 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block extra_css %}
+<style>
+    .password-strength {
+        height: 5px;
+        background: #e9ecef;
+        border-radius: 5px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .password-strength-bar {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s;
+    }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="auth-card">
+    <div class="auth-logo">
+        <picture>
+            <source srcset="{{ url_for('static', filename='logo.webp') }}" type="image/webp">
+            <source srcset="{{ url_for('static', filename='logo.png') }}" type="image/png"> 
+            <img src="{{ url_for('static', filename='logo.png') }}" 
+                 alt="MEDICRYPTIS Logo"
+                 class="navbar-logo"
+                 style="height: 200px;">
+        </picture>
+    </div>
+    
+ 
+    
+    <form method="POST" action="{{ url_for('register') }}">
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+            <div class="password-strength mt-2">
+                <div class="password-strength-bar" id="strengthBar"></div>
+            </div>
+            <small class="text-muted" id="strengthText">Password strength</small>
+        </div>
+        
+        <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Register</button>
+        
+        <div class="text-center">
+            <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('password').addEventListener('input', function() {
+    const password = this.value;
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthText = document.getElementById('strengthText');
+    
+    // Simple strength calculation
+    let strength = 0;
+    if (password.length > 7) strength++;
+    if (password.match(/[a-z]/)) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    
+    // Update UI
+    strengthBar.style.width = (strength * 20) + '%';
+    strengthBar.className = 'password-strength-bar ' + 
+        (strength < 2 ? 'bg-danger' : 
+         strength < 4 ? 'bg-warning' : 'bg-success');
+    strengthText.textContent = 
+        ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'][strength];
+});
+</script>
+{% endblock %}
