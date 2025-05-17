@@ -42,7 +42,14 @@
                                 <i class="fas fa-lock me-2"></i> This image is encrypted.
                             </div>
                         {% endif %}
-                        
+                        <!-- Message Body -->
+                        <div class="message-body mt-0 p-0 bg-light rounded">
+                          {% if message.body %}
+                             <p class="mb-0">{{ message.body }}</p>
+                          {% else %}
+                             <p class="text-muted">No message content</p>
+                          {% endif %}
+                        </div>
                         <!-- Combined email verification and decryption form -->
                         <div class="email-verification mt-4 p-4 bg-light rounded">
                             <h5 class="mb-3 text-center">Email Verification Required</h5>
@@ -82,7 +89,28 @@
     </div>
 </div>
 
-<!-- ... (keep your existing styles) ... -->
+<style>
+    .bg-teal {
+        background-color: #20c997;
+    }
+    .btn-teal {
+        background-color: #20c997;
+        color: white;
+    }
+    .btn-teal:hover {
+        background-color: #1aa179;
+        color: white;
+    }
+    .image-container {
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        background-color: #f8f9fa;
+    }
+    .message-body {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
