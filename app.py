@@ -2,7 +2,7 @@ import os
 import uuid
 import traceback
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash,session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -46,6 +46,7 @@ public_key = rsa_key.publickey()
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
+    email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(10), nullable=False)  # "staff" or "patient"
 
@@ -88,6 +89,19 @@ def pixelate_image(image_path):
     except Exception as e:
         app.logger.error(f"Pixelation error: {str(e)}")
         return None
+def is_password_strong(password):
+    """Check if password meets strength requirements"""
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter"
+    if not any(c.islower() for c in password):
+        return False, "Password must contain at least one lowercase letter"
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one digit"
+    if not any(c in '!@#$%^&*()_+-=[]{};:,.<>?/' for c in password):
+        return False, "Password must contain at least one special character"
+    return True, ""
 
 # Encryption/Decryption functions
 def encrypt_aes_rsa(data):
@@ -132,15 +146,25 @@ def home():
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         role = 'staff' if 'lab' in username.lower() else 'patient'
 
         if User.query.filter_by(username=username).first():
             flash("Username already exists.", "danger")
             return redirect(url_for('register'))
+            
+        if User.query.filter_by(email=email).first():
+            flash("Email already exists.", "danger")
+            return redirect(url_for('register'))
+        # Check password strength
+        is_strong, msg = is_password_strong(password)
+        if not is_strong:
+            flash(msg, "danger")
+            return redirect(url_for('register'))
 
         hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_password, role=role)
+        new_user = User(username=username, email=email, password=hashed_password, role=role)
         db.session.add(new_user)
         db.session.commit()
         flash("Registration successful!", "success")
@@ -255,6 +279,9 @@ def view_message(message_id):
 
     pixelated_image = None
     decrypted_image = None
+    
+    # Check if email was already verified for this message
+    email_verified = session.get(f'email_verified_{message_id}', False)
 
     if message.image_filename:
         base_name = os.path.splitext(message.image_filename)[0]
@@ -262,58 +289,65 @@ def view_message(message_id):
         if os.path.exists(os.path.join('static', pixelated_path)):
             pixelated_image = pixelated_path
 
-    if request.method == 'POST' and request.form.get('action') == 'decrypt' and message.image_filename:
-        try:
-            # Find encrypted file
-            encrypted_path = None
-            possible_paths = [
-                os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted', message.image_filename),
-                os.path.join(app.config['UPLOAD_FOLDER'], message.image_filename)
-            ]
+    if request.method == 'POST' and request.form.get('action') == 'verify_and_decrypt':
+        provided_email = request.form.get('email', '').strip()
+        
+        if provided_email == current_user.email:
+            # Store verification in session
+            session[f'email_verified_{message_id}'] = True
+            email_verified = True
             
-            for path in possible_paths:
-                if os.path.exists(path):
-                    encrypted_path = path
-                    break
-            
-            if not encrypted_path:
-                raise FileNotFoundError("Encrypted file not found")
-
-            with open(encrypted_path, 'rb') as f:
-                encrypted_data = f.read()
-
-            # Determine decryption method
-            if message.encryption_method == 'aes_rsa':
-                decrypted_data = decrypt_aes_rsa(encrypted_data)
-            else:  # chacha20
-                key_path = os.path.join(app.config['UPLOAD_FOLDER'], 'chacha_keys', f"{message.sender_id}.bin")
-                if not os.path.exists(key_path):
-                    raise FileNotFoundError("Decryption key not found")
+            try:
+                # Immediately attempt decryption after successful verification
+                encrypted_path = None
+                possible_paths = [
+                    os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted', message.image_filename),
+                    os.path.join(app.config['UPLOAD_FOLDER'], message.image_filename)
+                ]
                 
-                with open(key_path, 'rb') as key_file:
-                    key = key_file.read()
-                decrypted_data = decrypt_chacha20(encrypted_data, key)
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        encrypted_path = path
+                        break
+                
+                if not encrypted_path:
+                    raise FileNotFoundError("Encrypted file not found")
 
-            # Save decrypted image
-            dec_filename = f"dec_{uuid.uuid4().hex}_{message.image_filename}"
-            dec_path = os.path.join(app.config['UPLOAD_FOLDER'], 'decrypted', dec_filename)
-            os.makedirs(os.path.dirname(dec_path), exist_ok=True)
-            
-            with open(dec_path, 'wb') as f:
-                f.write(decrypted_data)
-            
-            decrypted_image = f"uploads/decrypted/{dec_filename}"
-            flash("Image decrypted successfully!", "success")
+                with open(encrypted_path, 'rb') as f:
+                    encrypted_data = f.read()
 
-        except Exception as e:
-            flash(f"Decryption failed: {str(e)}", "danger")
-            app.logger.error(f"Decryption error: {traceback.format_exc()}")
+                if message.encryption_method == 'aes_rsa':
+                    decrypted_data = decrypt_aes_rsa(encrypted_data)
+                else:  # chacha20
+                    key_path = os.path.join(app.config['UPLOAD_FOLDER'], 'chacha_keys', f"{message.sender_id}.bin")
+                    if not os.path.exists(key_path):
+                        raise FileNotFoundError("Decryption key not found")
+                    
+                    with open(key_path, 'rb') as key_file:
+                        key = key_file.read()
+                    decrypted_data = decrypt_chacha20(encrypted_data, key)
+
+                dec_filename = f"dec_{uuid.uuid4().hex}_{message.image_filename}"
+                dec_path = os.path.join(app.config['UPLOAD_FOLDER'], 'decrypted', dec_filename)
+                os.makedirs(os.path.dirname(dec_path), exist_ok=True)
+                
+                with open(dec_path, 'wb') as f:
+                    f.write(decrypted_data)
+                
+                decrypted_image = f"uploads/decrypted/{dec_filename}"
+                flash("Email verified and image decrypted successfully!", "success")
+
+            except Exception as e:
+                flash(f"Decryption failed: {str(e)}", "danger")
+                app.logger.error(f"Decryption error: {traceback.format_exc()}")
+        else:
+            flash("Email verification failed. Please provide the email you registered with.", "danger")
 
     return render_template('view_message.html',
                          message=message,
                          pixelated_image=pixelated_image,
-                         decrypted_image=decrypted_image)
-
+                         decrypted_image=decrypted_image,
+                         email_verified=email_verified)
 @app.route('/encrypt_staff', methods=['GET', 'POST'])
 @login_required
 def encrypt_staff():
@@ -349,12 +383,10 @@ def encrypt_staff():
             try:
                 encrypted, key = encrypt_chacha20(data)
                 
-                # Save key
                 os.makedirs(os.path.dirname(key_path), exist_ok=True)
                 with open(key_path, 'wb') as keyfile:
                     keyfile.write(key)
                 
-                # Save encrypted file
                 enc_filename = f"enc_{uuid.uuid4().hex}_{filename}"
                 enc_path = os.path.join(app.config['UPLOAD_FOLDER'], 'encrypted', enc_filename)
                 os.makedirs(os.path.dirname(enc_path), exist_ok=True)

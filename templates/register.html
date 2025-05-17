@@ -17,6 +17,30 @@
         width: 0%;
         transition: width 0.3s;
     }
+    
+     .requirements {
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+    
+    .requirement {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+    }
+    
+    .requirement i {
+        margin-right: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .valid {
+        color: #28a745;
+    }
+    
+    .invalid {
+        color: #dc3545;
+    }
 </style>
 {% endblock %}
 
@@ -33,12 +57,31 @@
         </picture>
     </div>
     
- 
+    <h2 class="auth-title mb-4">Create Your Account</h2>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     
     <form method="POST" action="{{ url_for('register') }}">
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" class="form-control" id="username" name="username" required>
+            
+             
+        </div>
+        
+        <div class="mb-3">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+           
         </div>
         
         <div class="mb-3">
@@ -48,6 +91,28 @@
                 <div class="password-strength-bar" id="strengthBar"></div>
             </div>
             <small class="text-muted" id="strengthText">Password strength</small>
+            <div class="requirements mt-2">
+                <div class="requirement" id="lengthReq">
+                    <i class="fas" id="lengthIcon"></i>
+                    <span>At least 8 characters</span>
+                </div>
+                <div class="requirement" id="upperReq">
+                    <i class="fas" id="upperIcon"></i>
+                    <span>At least one uppercase letter</span>
+                </div>
+                <div class="requirement" id="lowerReq">
+                    <i class="fas" id="lowerIcon"></i>
+                    <span>At least one lowercase letter</span>
+                </div>
+                <div class="requirement" id="numberReq">
+                    <i class="fas" id="numberIcon"></i>
+                    <span>At least one number</span>
+                </div>
+                <div class="requirement" id="specialReq">
+                    <i class="fas" id="specialIcon"></i>
+                    <span>At least one special character</span>
+                </div>
+            </div>
         </div>
         
         <div class="mb-3">
@@ -55,35 +120,118 @@
             <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
         </div>
         
-        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Register</button>
+        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+            <i class="fas fa-user-plus me-2"></i> Register
+        </button>
         
         <div class="text-center">
-            <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            <p class="mb-0">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
         </div>
     </form>
 </div>
 
 <script>
-document.getElementById('password').addEventListener('input', function() {
-    const password = this.value;
-    const strengthBar = document.getElementById('strengthBar');
-    const strengthText = document.getElementById('strengthText');
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirm_password');
+    const submitBtn = document.getElementById('submitBtn');
     
-    // Simple strength calculation
-    let strength = 0;
-    if (password.length > 7) strength++;
-    if (password.match(/[a-z]/)) strength++;
-    if (password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    // Check password requirements
+    function checkRequirements(password) {
+        const hasLength = password.length >= 8;
+        const hasUpper = /[A-Z]/.test(password);
+        const hasLower = /[a-z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+        
+        return { hasLength, hasUpper, hasLower, hasNumber, hasSpecial };
+    }
     
-    // Update UI
-    strengthBar.style.width = (strength * 20) + '%';
-    strengthBar.className = 'password-strength-bar ' + 
-        (strength < 2 ? 'bg-danger' : 
-         strength < 4 ? 'bg-warning' : 'bg-success');
-    strengthText.textContent = 
-        ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'][strength];
+    // Update requirement indicators
+    function updateRequirements(password) {
+        const reqs = checkRequirements(password);
+        
+        // Update icons and classes
+        document.getElementById('lengthIcon').className = reqs.hasLength ? 'fas fa-check valid' : 'fas fa-times invalid';
+        document.getElementById('upperIcon').className = reqs.hasUpper ? 'fas fa-check valid' : 'fas fa-times invalid';
+        document.getElementById('lowerIcon').className = reqs.hasLower ? 'fas fa-check valid' : 'fas fa-times invalid';
+        document.getElementById('numberIcon').className = reqs.hasNumber ? 'fas fa-check valid' : 'fas fa-times invalid';
+        document.getElementById('specialIcon').className = reqs.hasSpecial ? 'fas fa-check valid' : 'fas fa-times invalid';
+        
+        return reqs;
+    }
+    
+    // Update password strength meter
+    function updateStrengthMeter(password) {
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        
+        const reqs = checkRequirements(password);
+        let strength = 0;
+        
+        if (reqs.hasLength) strength++;
+        if (reqs.hasUpper) strength++;
+        if (reqs.hasLower) strength++;
+        if (reqs.hasNumber) strength++;
+        if (reqs.hasSpecial) strength++;
+        
+        // Update UI
+        strengthBar.style.width = (strength * 20) + '%';
+        strengthBar.className = 'password-strength-bar ' + 
+            (strength < 2 ? 'bg-danger' : 
+             strength < 4 ? 'bg-warning' : 'bg-success');
+        strengthText.textContent = 
+            ['Very Weak', 'Weak', 'Moderate', 'Strong', 'Very Strong'][strength];
+        strengthText.className = strength < 2 ? 'text-danger' : 
+                               strength < 4 ? 'text-warning' : 'text-success';
+    }
+    
+    // Check password match
+    function checkPasswordMatch() {
+        const confirmText = document.getElementById('confirmText');
+        if (passwordInput.value && confirmInput.value) {
+            if (passwordInput.value === confirmInput.value) {
+                confirmText.textContent = 'Passwords match';
+                confirmText.className = 'text-success';
+                return true;
+            } else {
+                confirmText.textContent = 'Passwords do not match';
+                confirmText.className = 'text-danger';
+                return false;
+            }
+        }
+        confirmText.textContent = '';
+        return false;
+    }
+    
+    // Validate form before submission
+    function validateForm() {
+        const password = passwordInput.value;
+        const reqs = checkRequirements(password);
+        const isMatch = checkPasswordMatch();
+        
+        const isValid = reqs.hasLength && reqs.hasUpper && reqs.hasLower && 
+                       reqs.hasNumber && reqs.hasSpecial && isMatch;
+        
+        submitBtn.disabled = !isValid;
+        return isValid;
+    }
+    
+    // Event listeners
+    passwordInput.addEventListener('input', function() {
+        updateStrengthMeter(this.value);
+        updateRequirements(this.value);
+        checkPasswordMatch();
+        validateForm();
+    });
+    
+    confirmInput.addEventListener('input', function() {
+        checkPasswordMatch();
+        validateForm();
+    });
+    
+    // Initial validation
+    validateForm();
 });
 </script>
 {% endblock %}
