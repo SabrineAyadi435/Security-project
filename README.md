@@ -25,7 +25,7 @@ Register with any other username (e.g., `john_doe`). Patients have access to a G
   - Patients: View received encrypted images and decrypt them securely.
 
 ## Technologies Used
-- **Frontend**: HTML, CSS (dark theme), Jinja2 templates
+- **Frontend**: HTML, CSS , Jinja2 templates
 - **Backend**: Python (Flask)
 - **Cryptography**: PyCryptodome
 - **Database**: SQLite
