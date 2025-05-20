@@ -33,7 +33,7 @@ Register with any other username (e.g., `john_doe`). Patients have access to a G
 ## Advanced Decryption Feature
 This project includes an enhanced security feature for decrypting images. When a user attempts to decrypt an image, they are sent a random one-time code via email . The user must enter this code to proceed with decryption, adding an additional layer of protection for sensitive data.
 A video demo showcasing this advanced feature is included in this repository to demonstrate the user experience and security workflow.
-[▶️ Watch demo video](advanced version video/[Medicryptis advanced version ‐ Réalisée avec Clipchamp.mp4])
+[▶️ Watch demo video](advanced version video/[video/Medicryptis_advanced_version.mp4])
 ## Installation & Setup
 
 Follow these steps to install and run the Medicryptis web application on your local machine.
