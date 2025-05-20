@@ -30,7 +30,9 @@ Register with any other username (e.g., `john_doe`). Patients have access to a G
 - **Cryptography**: PyCryptodome
 - **Database**: SQLite
 - **User Security**: Password hashing, strength checking (zxcvbn)
-
+## Advanced Decryption Feature
+This project includes an enhanced security feature for decrypting images. When a user attempts to decrypt an image, they are sent a random one-time code via email . The user must enter this code to proceed with decryption, adding an additional layer of protection for sensitive data.
+A video demo showcasing this advanced feature is included in this repository to demonstrate the user experience and security workflow.
 ## Installation & Setup
 
 Follow these steps to install and run the Medicryptis web application on your local machine.
@@ -77,3 +79,14 @@ Open your web browser and navigate to:
 ```arduino
 http://localhost:5000
 ```
+## Inspecting Database Schema
+
+To view the tables and their columns (schema) in the database, use the `inspect_database.py` script.
+
+### How to Run
+
+1. Activate your virtual environment and install dependencies if needed.
+2. Run this command in the project directory:
+
+```bash
+python inspect_database.py
